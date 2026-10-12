@@ -1,5 +1,7 @@
 # vetis-wt
 
+[![Crates.io downloads](https://img.shields.io/crates/d/vetis-wt)](https://crates.io/crates/vetis-wt) [![crates.io](https://img.shields.io/crates/v/vetis-wt?style=flat-square)](https://crates.io/crates/vetis-wt) [![Build Status](https://github.com/vetis-server/vetis-wt/actions/workflows/rust.yml/badge.svg?event=push)](https://github.com/vetis-server/vetis-wt/actions/workflows/rust.yml) ![Crates.io MSRV](https://img.shields.io/crates/msrv/vetis-wt) [![Documentation](https://docs.rs/vetis-wt/badge.svg)](https://docs.rs/vetis-wt/latest/vetis-wt) [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/vetis-server/vetis-wt/blob/main/LICENSE.md)  [![codecov](https://codecov.io/gh/vetis-server/vetis-wt/graph/badge.svg?token=T0HSBAPVSI)](https://codecov.io/gh/vetis-server/vetis-wt)
+
 vetis-wt adds webtransport support to your vetis server!
 
 ## Features
