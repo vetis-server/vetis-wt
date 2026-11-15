@@ -1,31 +1,27 @@
-use hyper::{
-    Method, StatusCode,
-    header::{self, CONNECTION, HeaderValue},
-};
-use hyper_util::rt::TokioIo;
+use cel::Context;
 use vetis::{
-    Request, Response, Str, VetisFutureResult,
-    errors::{HandlerError, HostError, VetisError},
-    host::{HostContext, path::Path},
+    Request, Response, VetisFutureResult,
+    errors::VetisError,
+    hook::{Hook, HookPhase},
+    matcher::Matcher,
 };
 
 /// Builder for handler path
-pub struct WebTransportPathBuilder {
-    uri: Str,
+pub struct WebTransportHookBuilder {
+    matcher: Option<Box<dyn Matcher>>,
 }
 
-impl WebTransportPathBuilder {
-    /// Allow set handler uri path
-    ///
-    /// # Arguments
-    ///
-    /// * `uri` - The uri of the handler path
+impl WebTransportHookBuilder {
+    /// Allow set a matcher
     ///
     /// # Returns
     ///
-    /// * `Self` - The builder
-    pub fn uri(mut self, uri: &str) -> Self {
-        self.uri = Str::from(uri.to_string());
+    /// * `Self` - The builder.
+    pub fn matcher<M>(mut self, matcher: M) -> Self
+    where
+        M: Matcher + Send + Sync + 'static,
+    {
+        self.matcher = Some(Box::new(matcher));
         self
     }
 
@@ -34,66 +30,51 @@ impl WebTransportPathBuilder {
     /// # Returns
     ///
     /// * `Result<HandlerPath, VetisError>` - The handler path or error
-    pub fn build(self) -> Result<WebTransportPath, VetisError> {
-        if self.uri.is_empty() {
-            return Err(VetisError::Host(HostError::Handler(HandlerError::Uri(
-                "URI cannot be empty".to_string(),
-            ))));
-        }
-
-        Ok(WebTransportPath { uri: self.uri.into() })
+    pub fn build(self) -> Result<WebTransportHook, VetisError> {
+        Ok(WebTransportHook {
+            matcher: self
+                .matcher
+                .map_or(None, |val| Some(val)),
+        })
     }
 }
 
 /// WebTransport path
-pub struct WebTransportPath {
-    uri: Str,
+pub struct WebTransportHook {
+    matcher: Option<Box<dyn Matcher>>,
 }
 
-impl WebTransportPath {
+impl WebTransportHook {
     /// Allow create a new handler path builder
     ///
     /// # Returns
     ///
     /// * `WebTransportPathBuilder` - The builder
-    pub fn builder() -> WebTransportPathBuilder {
-        WebTransportPathBuilder { uri: "/".into() }
+    pub fn builder() -> WebTransportHookBuilder {
+        WebTransportHookBuilder { matcher: None }
     }
 }
 
-impl Path for WebTransportPath {
-    fn uri(&self) -> &str {
-        &self.uri
+impl Hook for WebTransportHook {
+    fn has_matches(&self, _context: &Context) -> bool {
+        true
+    }
+
+    fn phase(&self) -> &HookPhase {
+        &HookPhase::Access
+    }
+
+    fn matcher_mut(&mut self) -> Option<&mut Box<dyn Matcher>> {
+        self.matcher
+            .as_mut()
     }
 
     fn handle<'a>(
         &'a self,
-        mut request: Request,
-        host_context: HostContext,
-    ) -> VetisFutureResult<'a, Response>
-    where
-        Self: Send,
-    {
-        let logger = host_context
-            .logger()
-            .clone();
-
-        let headers = request.headers();
-        let upgrade_header = headers.get(header::UPGRADE);
-        if request.method() != Method::CONNECT {
-            let response = Response::builder()
-                .status(StatusCode::BAD_REQUEST)
-                .empty();
-
-            return Box::pin(async move { Ok(response) });
-        }
-
-        tokio::task::spawn(async move {});
-
-        let future = async move {
-            let response = Response::builder().empty();
-            Ok(response)
-        };
+        request: Request,
+        _response: Option<Response>,
+    ) -> VetisFutureResult<'a, (Request, Option<Response>)> {
+        let future = async move { Ok((request, Some(Response::builder().empty()))) };
 
         Box::pin(future)
     }
