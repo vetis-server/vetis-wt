@@ -1,9 +1,6 @@
 use cel::Context;
 use vetis::{
-    Request, Response, VetisFutureResult,
-    errors::VetisError,
-    hook::{Hook, HookPhase},
-    matcher::Matcher,
+    HookPhases, Request, Response, VetisFutureResult, errors::VetisError, hook::{Hook, HookPhase}, make_bitflags, matcher::Matcher,
 };
 
 /// Builder for handler path
@@ -60,8 +57,8 @@ impl Hook for WebTransportHook {
         true
     }
 
-    fn phase(&self) -> &HookPhase {
-        &HookPhase::Access
+    fn phases(&self) -> HookPhases {
+        make_bitflags!(HookPhase::Access)
     }
 
     fn matcher_mut(&mut self) -> Option<&mut Box<dyn Matcher>> {
