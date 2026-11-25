@@ -2,7 +2,7 @@ use cel::Context;
 use vetis::{
     Request, Response, VetisFutureResult,
     errors::VetisError,
-    hook::{Hook, HookPhase, HookPhases},
+    hook::{Hook, HookPhase},
     matcher::Matcher,
 };
 
@@ -56,12 +56,16 @@ impl WebTransportHook {
 }
 
 impl Hook for WebTransportHook {
+    fn setup<'a>(&'a mut self) -> VetisFutureResult<'a, ()> {
+        Box::pin(async move {Ok(())})
+    }
+        
     fn has_matches(&self, _context: &Context) -> bool {
         true
     }
 
-    fn phases(&self) -> HookPhases {
-        HookPhases::new(HookPhase::Access)
+    fn phase(&self) -> HookPhase {
+        HookPhase::Access
     }
 
     fn matcher_mut(&mut self) -> Option<&mut Box<dyn Matcher>> {
